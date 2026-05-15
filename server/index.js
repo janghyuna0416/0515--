@@ -1,0 +1,84 @@
+const express = require('express');
+const cors = require('cors');
+const { OpenAI } = require('openai');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Clients
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+);
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+app.post('/api/analyze', async (req, res) => {
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+        return res.status(400).json({ success: false, message: '텍스트를 입력해주세요.' });
+    }
+
+    try {
+        // 1. OpenAI Sentiment Analysis
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: "당신은 감성 분석 전문가입니다. 아래 텍스트를 분석하여 반드시 JSON 형식으로만 응답하세요. JSON 형식: { \"sentiment\": \"positive\" | \"negative\" | \"neutral\", \"confidence\": number (0-100), \"reason\": \"string\" }"
+                },
+                {
+                    role: "user",
+                    content: text
+                }
+            ],
+            response_format: { type: "json_object" }
+        });
+
+        const analysisResult = JSON.parse(response.choices[0].message.content);
+
+        // 2. Save to Supabase
+        const { data, error } = await supabase
+            .from('sentiment_logs')
+            .insert([
+                {
+                    text: text,
+                    sentiment: analysisResult.sentiment,
+                    confidence: analysisResult.confidence,
+                    reason: analysisResult.reason
+                }
+            ]);
+
+        if (error) {
+            console.error('Supabase Error:', error);
+            // Even if DB save fails, we return the analysis result to the user
+        }
+
+        res.json({
+            success: true,
+            ...analysisResult
+        });
+
+    } catch (error) {
+        console.error('Analysis Error:', error);
+        res.status(500).json({ success: false, message: '분석 중 오류가 발생했습니다.' });
+    }
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/../public/index.html');
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
