@@ -53,7 +53,14 @@ analyzeBtn.addEventListener('click', async () => {
 
         if (data.success) {
             // Render result
-            sentimentBadge.textContent = data.sentiment;
+            const sentimentMap = {
+                'positive': '긍정적 😊',
+                'negative': '부정적 😔',
+                'neutral': '중립적 😐'
+            };
+            const koreanSentiment = sentimentMap[data.sentiment.toLowerCase()] || data.sentiment;
+            
+            sentimentBadge.textContent = koreanSentiment;
             sentimentBadge.className = `badge ${data.sentiment.toLowerCase()}`;
             
             confidenceBar.style.width = `${data.confidence}%`;
