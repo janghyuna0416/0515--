@@ -76,6 +76,24 @@ app.post('/api/analyze', async (req, res) => {
     }
 });
 
+// 2. Get history from Supabase
+app.get('/api/history', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('sentiment_logs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+
+        res.json({ success: true, history: data });
+    } catch (error) {
+        console.error('History Error:', error);
+        res.status(500).json({ success: false, message: '기록을 불러오지 못했습니다.' });
+    }
+});
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/../public/index.html');
 });

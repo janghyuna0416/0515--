@@ -7,6 +7,44 @@ const confidenceBar = document.getElementById('confidenceBar');
 const confidenceValue = document.getElementById('confidenceValue');
 const reasonText = document.getElementById('reasonText');
 const errorMessage = document.getElementById('errorMessage');
+const historyList = document.getElementById('historyList');
+
+const sentimentMap = {
+    'positive': '긍정적 😊',
+    'negative': '부정적 😔',
+    'neutral': '중립적 😐'
+};
+
+// Fetch and render history
+async function loadHistory() {
+    try {
+        const response = await fetch('/api/history');
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.history.length === 0) {
+                historyList.innerHTML = '<p class="empty-msg">아직 기록이 없습니다. 첫 감정을 들려주세요!</p>';
+                return;
+            }
+
+            historyList.innerHTML = data.history.map(item => `
+                <div class="history-item">
+                    <div class="history-item-header">
+                        <div class="badge ${item.sentiment.toLowerCase()}">${sentimentMap[item.sentiment.toLowerCase()] || item.sentiment}</div>
+                        <span class="history-date">${new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p class="history-text">${item.text}</p>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Load History Error:', error);
+        historyList.innerHTML = '<p class="empty-msg">기록을 불러오지 못했습니다.</p>';
+    }
+}
+
+// Initial load
+loadHistory();
 
 // Character count update
 textInput.addEventListener('input', () => {
@@ -70,6 +108,9 @@ analyzeBtn.addEventListener('click', async () => {
             
             resultCard.classList.remove('hidden');
             resultCard.scrollIntoView({ behavior: 'smooth' });
+            
+            // Refresh history list
+            loadHistory();
         } else {
             showError(data.message || '분석 중 오류가 발생했습니다.');
         }
