@@ -36,7 +36,7 @@ app.post('/api/analyze', async (req, res) => {
             messages: [
                 {
                     role: "system",
-                    content: "당신은 감성 분석 전문가입니다. 아래 텍스트를 분석하여 반드시 JSON 형식으로만 응답하세요. JSON 형식: { \"sentiment\": \"positive\" | \"negative\" | \"neutral\", \"confidence\": number (0-100), \"reason\": \"string\" }"
+                    content: "당신은 감성 분석 전문가입니다. 아래 텍스트를 분석하여 반드시 JSON 형식으로만 응답하세요. 분석 결과의 'reason'은 반드시 한국어로 친절하고 상세하게 설명해야 합니다. JSON 형식: { \"sentiment\": \"positive\" | \"negative\" | \"neutral\", \"confidence\": number (0-100), \"reason\": \"한국어 설명\" }"
                 },
                 {
                     role: "user",
