@@ -1,4 +1,5 @@
 const express = require('express');
+// Trigger redeploy to apply environment variables
 const cors = require('cors');
 const { OpenAI } = require('openai');
 const { createClient } = require('@supabase/supabase-js');
